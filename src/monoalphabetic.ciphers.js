@@ -1,3 +1,6 @@
+if (typeof(require) !== 'undefined'){
+	var extend = require('node.extend');
+}
 
 var monoalphabetic = {
 	/**
@@ -10,8 +13,7 @@ var monoalphabetic = {
 	shift: function(text, options){
 		var opts = extend({}, {
 			'rotation': 13,
-			'alphabet': 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
-			'unaltered': [' ', '.']
+			'alphabet': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 		}, options);
 
 		if (opts.rotation >= opts.alphabet.length){
@@ -29,17 +31,16 @@ var monoalphabetic = {
 			lookupTable += opts.alphabet[rotatedIndex];
 		}
 
-		return this.substitution(text, {
+		return this.substitution(text, extend({}, {
 			'from': opts.alphabet.split(''),
-			'to': lookupTable.split(''),
-			'unaltered': opts.unaltered
-		});
+			'to': lookupTable.split('')
+		}, opts));
 	},
 	substitution: function(text, options){
 		var opts = extend({}, {
 			'from': ['A','B', 'C'],
 			'to': ['1', '2', '3'],
-			'unaltered': [' ', '.']
+			'checkLowercase': false
 		}, options);
 
 		if (opts.from.length !== opts.to.length){
@@ -51,22 +52,25 @@ var monoalphabetic = {
 		for(var i = 0 ; i < text.length ; i++){
 			var char = text[i];
 
-			//keep spaces or other punctuation characters
-			if (opts.unaltered.indexOf(char) > -1){
-				result += char;
-				continue;
-			}
-
+			var isLowercase = (char == char.toLowerCase());
+			if (opts.checkLowercase)
+				char = char.toUpperCase();
 			var index = opts.from.indexOf(char);
-			if (index === -1) throw "character not supported " + char;
-			result += opts.to[index];
+			if (index === -1) {
+				result += char;
+			} else {
+				if (isLowercase && opts.checkLowercase)
+					result += opts.to[index].toLowerCase();
+				else
+					result += opts.to[index];
+			}
 		}
 
 		return result;
 	},
 	customFunction: function(text, options){
 		var opts = extend({}, {
-			"transform": function(char){return char;},
+			"transform": function(char, index){return char;},
 			'unaltered': [' ', '.']
 		}, options);
 
@@ -85,53 +89,58 @@ var monoalphabetic = {
 				continue;
 			}
 
-			result += opts.transform(char);
+			result += opts.transform(char, i);
 		}
 
 		return result;
+	},
+	//sequence of characters based on a single
+	generateKeyBasedOnASeed: function(){
+
+	},
+	shiftOptions: {
+		'rot5': {
+			'alphabet': '0123456789',
+			'rotation': 5
+		},
+		'rot13': {
+			'alphabet': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+			'rotation': 13,
+			'checkLowercase': true
+		},
+		'rot47': {
+			'alphabet': '!"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~',
+			'rotation': 47
+		},
+		//Caesar cipher
+		'caesarEncrypt': {
+			'alphabet': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+			'rotation': 3,
+			'checkLowercase': true
+		},
+		'caesarDecrypt': {
+			'alphabet': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+			'rotation': 23,
+			'checkLowercase': true
+		}
+	},
+	substitutionOptions: {
+		//Atbash with latin alphabet
+		'atbash': {
+			'from': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+			'to': 'ZYXWVUTSRQPONMLKJIHGFEDCBA'.split('')
+		},
+		//keyword cipher with "KRYPTOS" as the keyword
+		'keyword': {
+			'from': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+			'to': 'KRYPTOSABCDEFGHIJLMNQUVWXZ'.split('')
+		}
 	}
 };
 
-var optsRot5 =  {
-	'alphabet': '0123456789',
-	'rotation': 5
-};
-var optsRot13 = {
-	'alphabet': 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
-	'rotation': 13
-};
-
-var optsRot18 = {
-	'alphabet': 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890',
-	'rotation': 18
-};
-
-//ROT47
-var optsRot47 = {
-	'alphabet': '!"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~',
-	'rotation': 47
-};
-
-//Caesar cipher, shift of 3, means +23
-var optsCaesar = {
-	'alphabet': 'abcdefghijklmnopqrstuvwxyz',
-	'rotation': 23
-};
-
-console.log(monoalphabetic.shift("07", optsRot5));
-console.log(monoalphabetic.shift("ROT THIRTEEN", optsRot13));
-console.log(monoalphabetic.shift("ROT18", optsRot18));
-console.log(monoalphabetic.shift("ROT47", optsRot47));
-console.log(monoalphabetic.shift("caesar", optsCaesar));
-
-//Atbash with latin alphabet
-var optsAtbash = {
-	'from': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
-	'to': 'ZYXWVUTSRQPONMLKJIHGFEDCBA'.split('')
-};
-
-console.log(monoalphabetic.substitution('NLMVB', optsAtbash));
-
+if (typeof(module) !== 'undefined'){
+	module.exports = monoalphabetic;
+}
 
 //affine encrypt
 var affineKey = 5;//1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, or 25
@@ -157,5 +166,43 @@ var optsAffineDecrypt = {
 	}
 };
 
-console.log(monoalphabetic.customFunction('AFFINECIPHER', optsAffineEncrypt));
-console.log(monoalphabetic.customFunction('IHHWVCSWFRCP', optsAffineDecrypt));
+//console.log(monoalphabetic.customFunction('AFFINECIPHER', optsAffineEncrypt));
+//console.log(monoalphabetic.customFunction('IHHWVCSWFRCP', optsAffineDecrypt));
+
+
+
+//one time pad cipher
+//http://en.wikipedia.org/wiki/One-time_pad
+//based on
+//The Beale Cipher
+//http://www.cs.utsa.edu/~wagner/laws/pad.html
+//can be used for Stream ciphers too
+//http://en.wikipedia.org/wiki/Stream_cipher
+
+var oneTimeKey = 'XMCKL';
+var oneTimeAlphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+//var oneTimeNumerics = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25];
+
+var optsOneTimeEncrypt = {
+	'transform': function(latinCharacter, index){
+		var textNumber = oneTimeAlphabet.indexOf(latinCharacter.toUpperCase());
+		var indexInKey = index % oneTimeKey.length;//overflow if used in stream ciphers
+		var keyNumber = oneTimeAlphabet.indexOf(oneTimeKey.charAt(indexInKey).toUpperCase());
+
+		return oneTimeAlphabet.charAt( (textNumber + keyNumber) % oneTimeAlphabet.length);
+	}
+};
+var optsOneTimeDecrypt = {
+	'transform': function(latinCharacter, index){
+		var textNumber = oneTimeAlphabet.indexOf(latinCharacter.toUpperCase());
+		var indexInKey = index % oneTimeKey.length;//overflow if used in stream ciphers
+		var keyNumber = oneTimeAlphabet.indexOf(oneTimeKey.charAt(indexInKey).toUpperCase());
+
+		return oneTimeAlphabet.charAt( (textNumber - keyNumber) % oneTimeAlphabet.length);
+	}
+};
+
+//console.log(monoalphabetic.customFunction('HELLO', optsOneTimeEncrypt));
+//console.log(monoalphabetic.customFunction('EQNVZ', optsOneTimeDecrypt));
+
+

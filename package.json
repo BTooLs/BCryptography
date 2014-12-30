@@ -1,0 +1,23 @@
+{
+  "name": "bcryptography",
+  "version": "0.1.0",
+  "description": "Learning projects for basic cryptographic algorithms.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BTooLs/BCryptography.git"
+  },
+  "author": "B.G.Adrian",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/BTooLs/BCryptography/issues"
+  },
+  "homepage": "https://github.com/BTooLs/BCryptography",
+  "devDependencies": {
+    "kludjs": "~1.0.0",
+    "node.extend": "~1.1.3"
+  }
+}
