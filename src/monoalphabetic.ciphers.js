@@ -70,8 +70,8 @@ var monoalphabetic = {
 	},
 	customFunction: function(text, options){
 		var opts = extend({}, {
-			"transform": function(char, index){return char;},
-			'unaltered': [' ', '.']
+			'alphabet': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+			"transform": function(char, index){return char;}
 		}, options);
 
 		var result = '';
@@ -84,19 +84,15 @@ var monoalphabetic = {
 			var char = text[i];
 
 			//keep spaces or other punctuation characters
-			if (opts.unaltered.indexOf(char) > -1){
+			if (opts.alphabet.indexOf(char) === -1){
 				result += char;
 				continue;
 			}
 
-			result += opts.transform(char, i);
+			result += opts.transform(char, i, opts);
 		}
 
 		return result;
-	},
-	//sequence of characters based on a single
-	generateKeyBasedOnASeed: function(){
-
 	},
 	shiftOptions: {
 		'rot5': {
@@ -131,9 +127,43 @@ var monoalphabetic = {
 			'to': 'ZYXWVUTSRQPONMLKJIHGFEDCBA'.split('')
 		},
 		//keyword cipher with "KRYPTOS" as the keyword
-		'keyword': {
+		'keywordEncrypt': {
 			'from': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
 			'to': 'KRYPTOSABCDEFGHIJLMNQUVWXZ'.split('')
+		},
+		'keywordDecrypt': {
+			'from': 'KRYPTOSABCDEFGHIJLMNQUVWXZ'.split(''),
+			'to': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+		}
+	},
+	customFunctionsOptions: {
+		affineEncrypt: {
+			key: 5,//1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, or 25
+			keyInverse: 21,//modular multiplicative inverse of Key modulo Size
+			shiftMagnitudine: 8,
+			size: 26, //alphabet size, affineKey and affineSize must be coprime
+			alphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
+			transform: function(latinCharacter, index, opts){
+				var x = (latinCharacter.toUpperCase().charCodeAt(0) - 65);
+				var asciiResult = ((opts.key * x) + opts.shiftMagnitudine) % opts.size;
+
+				return String.fromCharCode(asciiResult + 65)
+			}
+		},
+		affineDecrypt: {
+			key: 5,//1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, or 25
+			keyInverse: 21,//modular multiplicative inverse of Key modulo Size
+			shiftMagnitudine: 8,
+			size: 26, //alphabet size, affineKey and affineSize must be coprime
+			alphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
+			transform: function(latinCharacter, index, opts){
+				var y = (latinCharacter.toUpperCase().charCodeAt(0) - 65);
+				var tmp = (opts.keyInverse * (y - opts.shiftMagnitudine));
+				//because modulo in javascript doesn't play well with negative numbers
+				//http://stackoverflow.com/questions/4467539/javascript-modulo-not-behaving
+				var asciiResult = ((tmp % opts.size) + opts.size) % opts.size;
+				return String.fromCharCode(asciiResult + 65)
+			}
 		}
 	}
 };
@@ -142,32 +172,6 @@ if (typeof(module) !== 'undefined'){
 	module.exports = monoalphabetic;
 }
 
-//affine encrypt
-var affineKey = 5;//1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, or 25
-var affineKeyInverse = 21;//modular multiplicative inverse of Key modulo Size
-var affineShiftMagnitudine = 8;
-var affineSize = 26; //alphabet size, affineKey and affineSize must be coprime
-var optsAffineEncrypt = {
-	'transform': function(latinCharacter){
-		var x = (latinCharacter.toUpperCase().charCodeAt(0) - 65);
-		var asciiResult = ((affineKey * x) + affineShiftMagnitudine) % affineSize;
-
-		return String.fromCharCode(asciiResult + 65)
- 	}
-};
-var optsAffineDecrypt = {
-	'transform': function(latinCharacter){
-		var y = (latinCharacter.toUpperCase().charCodeAt(0) - 65);
-		var tmp = (affineKeyInverse * (y - affineShiftMagnitudine));
-		//because modulo in javascript doesn't play well with negative numbers
-		//http://stackoverflow.com/questions/4467539/javascript-modulo-not-behaving
-		var asciiResult = ((tmp % affineSize) + affineSize) % affineSize;
-		return String.fromCharCode(asciiResult + 65)
-	}
-};
-
-//console.log(monoalphabetic.customFunction('AFFINECIPHER', optsAffineEncrypt));
-//console.log(monoalphabetic.customFunction('IHHWVCSWFRCP', optsAffineDecrypt));
 
 
 
