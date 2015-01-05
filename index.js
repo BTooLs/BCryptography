@@ -1,4 +1,5 @@
-var extend = require('node.extend');
-mono = require('./src/monoalphabetic.ciphers.js');
+var extend = require('node.extend')
+    , mono = require('./src/substitution.ciphers.js')
+;
 
 console.log('TODO');
